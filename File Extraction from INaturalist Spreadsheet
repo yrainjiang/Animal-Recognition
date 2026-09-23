@@ -1,0 +1,68 @@
+# When exporting from INaturalist, be sure to include the "image_url" column!
+
+if df is not None:
+    image_url_column = 'image_url'
+    # Since all images are prairie dogs, we'll assign them to a single class subdirectory
+    class_subdir_name = 'prairie_dog'
+
+    # Create the single class subdirectory for all images
+    class_dir = os.path.join(output_image_dir, class_subdir_name)
+    os.makedirs(class_dir, exist_ok=True)
+
+    if image_url_column in df.columns:
+        print(f"Starting image download from column '{image_url_column}' into '{class_subdir_name}' subdirectory...")
+        downloaded_count = 0
+        failed_count = 0
+        download_limit = 3999 # Set the limit for the number of images to download
+
+        for index, row in df.iterrows():
+            if downloaded_count >= download_limit:
+                print(f"Reached download limit of {download_limit} images. Stopping download.")
+                break
+
+            image_url = row[image_url_column]
+
+            if pd.isna(image_url):
+                print(f"Skipping row {index}: No image URL found.")
+                continue
+            try:
+                # Extract filename from URL or use a generic name
+                original_filename = os.path.basename(image_url).split('?')[0] # Remove query parameters
+                # Ensure filename is unique by prepending the DataFrame index
+                if not original_filename:
+                    filename = f"image_{index}.jpg" # Fallback if URL doesn't have a clear filename
+                else:
+                    name, ext = os.path.splitext(original_filename)
+                    filename = f"{index}_{name}{ext or '.jpg'}" # Use .jpg if no extension found
+                file_path = os.path.join(class_dir, filename)
+                # Download the image
+                response = requests.get(image_url, stream=True, timeout=10)
+                response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+
+                with open(file_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                downloaded_count += 1
+                if downloaded_count % 100 == 0:
+                    print(f"Downloaded {downloaded_count} images...")
+
+            except requests.exceptions.RequestException as e:
+                print(f"Error downloading {image_url}: {e}")
+                failed_count += 1
+            except Exception as e:
+                print(f"An unexpected error occurred with {image_url}: {e}")
+                failed_count += 1
+
+        print(f"\nFinished downloading images. Successfully downloaded: {downloaded_count}, Failed: {failed_count}.")
+        print(f"Images saved to: {class_dir}")
+
+        # List a few downloaded files to confirm
+        print("\nFirst 5 downloaded files (if any) in the class directory:")
+        for i, item in enumerate(os.listdir(class_dir)):
+            if i >= 5: break
+            print(item)
+    else:
+        print(f"Error: Required column ('{image_url_column}') not found in the CSV file.")
+        print("Available columns are:", df.columns.tolist())
+else:
+    print("Cannot proceed with image download because the DataFrame was not loaded successfully.")
