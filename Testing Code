@@ -1,0 +1,36 @@
+from google.colab import files
+
+uploaded = files.upload()
+
+test_image_path = list(uploaded.keys())[0]
+
+from tensorflow.keras.preprocessing import image
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf # Import tensorflow to load model
+
+# Load the trained model
+DRIVE_MODEL_PATH = '/content/drive/MyDrive/prairiedog.keras'
+model = tf.keras.models.load_model(DRIVE_MODEL_PATH)
+
+# Assuming IMG is (256, 256) from the training cell
+# Use the same target size as the training images
+img = image.load_img(test_image_path, target_size=(256, 256))
+
+plt.imshow(img)
+plt.axis('off')
+plt.show()
+
+img_array = image.img_to_array(img) / 255.0
+img_array = np.expand_dims(img_array, axis=0)
+
+prediction = model.predict(img_array)[0][0]
+
+print("Prediction value:", prediction)
+
+# Interpret the binary prediction
+# Assuming 'not_prairie_dog' is 0 and 'prairie_dog' is 1 based on alphabetical order and binary class_mode
+if prediction > 0.5:
+    print("AI thinks: Prairie Dog")
+else:
+    print("AI thinks: Not Prairie Dog")
