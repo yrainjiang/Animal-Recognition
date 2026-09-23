@@ -41,4 +41,4 @@ model.summary()
 #Train
 history = model.fit(train, validation_data=val, epochs=10)
 
-model.save(DRIVE_MODEL_PATH, save_format='keras') # Use DRIVE_MODEL_PATH and specify format
+model.save(DRIVE_MODEL_PATH, save_format='keras') # Change DRIVE_MODEL_PATH to whatever path you want the model to be saved.
