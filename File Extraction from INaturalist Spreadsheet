@@ -1,3 +1,27 @@
+import pandas as pd
+import requests
+import os
+
+# Define the path to your CSV file
+csv_file_path = '/content/observations-779055.csv'
+
+# Define the directory where you want to save the images
+output_image_dir = '/content/downloaded_prairie_dog_images'
+os.makedirs(output_image_dir, exist_ok=True)
+
+# Read the CSV file into a pandas DataFrame
+try:
+    df = pd.read_csv(csv_file_path)
+    print(f"Successfully loaded {csv_file_path}.")
+    print("First 5 rows of the DataFrame:")
+    display(df.head())
+except FileNotFoundError:
+    print(f"Error: CSV file not found at {csv_file_path}")
+    df = None
+except Exception as e:
+    print(f"Error loading CSV: {e}")
+    df = None
+
 # When exporting from INaturalist, be sure to include the "image_url" column!
 
 if df is not None:
